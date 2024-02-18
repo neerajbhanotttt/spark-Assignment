@@ -25,12 +25,17 @@ case class passengerFlights(passengerID: Int, longestRunOutsideUK: Int)
 
 object Main {
   def main(args: Array[String]): Unit = {
+
+    // creating spark context object
+
     val spark = SparkSession.builder()
       .master("local[1]")
       .appName("SparkByExample")
       .getOrCreate();
 
     import spark.implicits._
+
+    //Getting the Flight data and passenger dataset ready.
 
     val path = "data/"
     val flightData = spark.read.option("header","true").option("inferSchema", "true").csv(path+"flightData.csv")
@@ -46,11 +51,14 @@ object Main {
 
     flightDs.show()
 
+// Question 1: Find the total number of flights for each month.
+
 
     val flightDs2  = flightDs.map(row => flightt(row.passengerID, row.flightID, row.from, row.to, row.date,
       row.date.toString.substring(5,7).toInt))
 
 
+    // Get distinct count of the flightID using countDistinct for each month number
 
     val flightByMonth = flightDs2.groupBy("monthNumber")
       .agg(countDistinct("flightID").as("Count"))
@@ -65,7 +73,7 @@ object Main {
 
 
 
-
+//  Question 2: Find the names of the 100 most frequent flyers.
 
     val joinedData = flightDs.join(passengerDs, Seq("passengerID"), "inner")
     val joinedFlightPassengerDs  = joinedData.as[joinedFlightPassenger]
@@ -79,6 +87,9 @@ object Main {
     top100Flyers.show()
 
     top100Flyers.write.format("csv").option("header" , "true").mode("overwrite").save(path+"top100Flyers")
+
+
+//Question 3: Find the greatest number of countries a passenger has been in without being in the UK. For example, if the countries a passenger was in were: UK -> FR -> US -> CN -> UK -> DE -> UK, the correct answer would be 3 countries.
 
     // Define a function to remove consecutive duplicates in an array, keeping only the first occurrence
     def removeConsecutiveDuplicates(arr: Seq[String]): Seq[String] = {
@@ -121,9 +132,13 @@ object Main {
 
 
 
+//Question 4:Find the passengers who have been on more than 3 flights together.
+
 
     val flight1 = flightData
     val flight2 = flight1
+
+    // self joining the two dataframes on the basis of flight id, date and passengerid
 
     def flightsTogetherFunc(flight1:DataFrame,flight2:DataFrame,N:Int) : DataFrame =
     {
@@ -146,7 +161,7 @@ object Main {
 
 
 
-
+//Question 5: Find the passengers who have been on more than N flights together within the range (from,to).
 
     def flightsTogetherFunc2(flight1:DataFrame,flight2:DataFrame,N:Int) : DataFrame = {
       flight1.as("F1").join(flight2.as("F2"),

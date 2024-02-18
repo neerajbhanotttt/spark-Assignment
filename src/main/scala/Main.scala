@@ -32,7 +32,7 @@ object Main {
 
     import spark.implicits._
 
-    val path = "/home/neeraj/IdeaProjects/spark-Assignment/data/"
+    val path = "data/"
     val flightData = spark.read.option("header","true").option("inferSchema", "true").csv(path+"flightData.csv")
     val passengerData = spark.read.option("header","true").option("inferSchema", "true").csv(path+"passengers.csv")
 
